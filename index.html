@@ -12,10 +12,11 @@
       --main:#0b1320;
       --accent:#d94b2b;
       --muted:#666;
+      --bg:#f4f6f8;
     }
     body{
       font-family: 'Tajawal', sans-serif;
-      background:#f4f6f8;
+      background:var(--bg);
       margin:0;
       padding:24px;
       color:var(--main);
@@ -55,6 +56,11 @@
       border:none;
       font-weight:700;
       margin-top:12px;
+      transition:0.3s;
+    }
+    .btn:hover{
+      transform:translateY(-2px);
+      box-shadow:0 4px 12px rgba(0,0,0,0.08);
     }
     .btn.secondary{ background:#666; }
     .controls{ display:flex; gap:8px; flex-wrap:wrap; }
@@ -70,19 +76,53 @@
       border-radius:6px;
       box-sizing:border-box;
       direction:rtl;
+      opacity:0;
+      transform:translateY(20px);
+      animation:fadeSlide 0.8s forwards;
+    }
+    @keyframes fadeSlide{
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
     }
     .invoice .header{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
     .brand { text-align:right; }
+    .brand img.logo{
+      width:80px;
+      height:auto;
+      display:block;
+      margin-bottom:6px;
+      border-radius:8px;
+      transition: transform 0.5s ease, opacity 0.5s ease;
+      background:white; /* خلفية بيضاء للشعار الشفاف */
+      padding:4px;
+    }
     .brand h1{ margin:0; font-size:30px; letter-spacing:2px; }
     .brand p{ margin:6px 0 0; color:var(--muted); font-size:14px; }
     .meta { text-align:left; font-size:13px; color:var(--muted); }
     .divider{ height:1px; background:#eee; margin:12px 0; }
-    table{ width:100%; border-collapse:collapse; font-size:14px; }
-    th, td{ padding:10px 8px; border-bottom:1px solid #f0f0f0; text-align:right; }
-    th{ font-weight:700; color:var(--muted); background:transparent; }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:14px;
+      border:1px solid #e6e9ee;
+      border-radius:8px;
+      overflow:hidden;
+    }
+    th, td{ padding:12px 10px; text-align:right; }
+    th{
+      font-weight:600;
+      color:#555;
+      background:#f8f9fa;
+    }
+    td{
+      background:#fff;
+      border-bottom:1px solid #f0f0f0;
+    }
     .right { text-align:left; }
     .totals { margin-top:8px; display:flex; justify-content:flex-end; gap:10px; }
-    .totals .box { width:260px; background:#fafafa; padding:12px; border-radius:8px; font-weight:700; }
+    .totals .box { width:260px; background:#f8f9fa; padding:12px; border-radius:8px; font-weight:700; box-shadow:0 2px 8px rgba(0,0,0,0.03); }
     .footer{ margin-top:18px; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted); }
     .contact { text-align:right; }
   </style>
@@ -149,11 +189,12 @@
 
     <div class="preview-panel">
       <h2>معاينة الفاتورة</h2>
-      <div id="invoice_preview" class="invoice"></div>
+      <div id="invoice_preview" class="invoice">
+        <img id="logo_img" src="" class="logo" alt="LIGEER Logo">
+      </div>
     </div>
   </div>
 
-  <!-- تحميل المكتبات -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 
@@ -178,10 +219,26 @@
 
     function removeItem(btn){ btn.parentElement.remove(); }
 
-    window.addEventListener('DOMContentLoaded',()=>{defaultItems.forEach(it=>addItem(it));renderPreview();});
+    async function loadLogoBase64(url){
+      const res = await fetch(url);
+      const blob = await res.blob();
+      return new Promise((resolve)=>{
+        const reader = new FileReader();
+        reader.onloadend = ()=>resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    let logoBase64 = '';
+    loadLogoBase64('https://www2.0zz0.com/2025/10/15/15/879728691.jpg').then(data=>{
+      logoBase64 = data;
+      renderPreview();
+    });
+
+    window.addEventListener('DOMContentLoaded',()=>{defaultItems.forEach(it=>addItem(it));});
 
     function gatherData(){
-      const d={
+      return {
         shop_name:shop_name.value,
         shop_email:shop_email.value,
         shop_phone:shop_phone.value,
@@ -196,7 +253,7 @@
           qty:+div.querySelector('.item_qty').value||0,
           price:+div.querySelector('.item_price').value||0
         }))
-      };return d;
+      };
     }
 
     function renderPreview(){
@@ -205,9 +262,13 @@
         const total=it.qty*it.price;subtotal+=total;
         return `<tr><td style="width:50%">${it.desc}</td><td>${it.qty}</td><td class="right">${it.price.toFixed(2)} SAR</td><td class="right">${total.toFixed(2)} SAR</td></tr>`;
       }).join('');
-      invoice_preview.innerHTML=`
+
+      document.getElementById('logo_img').src = logoBase64;
+
+      invoice_preview.innerHTML = `
         <div class="header">
           <div class="brand">
+            <img src="${logoBase64}" class="logo" alt="LIGEER Logo">
             <h1>LIGEER</h1>
             <p>${d.shop_name}</p>
             <p style="margin-top:6px;font-size:13px;color:var(--muted)">${d.shop_address}</p>
@@ -256,20 +317,19 @@
     function downloadPDF(){
       renderPreview();
       const element=document.getElementById('invoice_preview');
-      const opt={
+      html2pdf().set({
         margin:10,
         filename:(invoice_no.value||'invoice')+'.pdf',
         image:{type:'jpeg',quality:1},
-        html2canvas:{scale:1.4,useCORS:true,logging:false},
+        html2canvas:{scale:1.4,useCORS:true,backgroundColor:"#ffffff"},
         jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-      };
-      html2pdf().set(opt).from(element).save();
+      }).from(element).save();
     }
 
     async function downloadImage(){
       renderPreview();
       const element=document.getElementById('invoice_preview');
-      const canvas=await html2canvas(element,{scale:2,useCORS:true});
+      const canvas=await html2canvas(element,{scale:2,useCORS:true,backgroundColor:"#ffffff"});
       const imgData=canvas.toDataURL("image/jpeg",1.0);
       const link=document.createElement("a");
       link.href=imgData;
