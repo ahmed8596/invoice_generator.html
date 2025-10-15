@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>مولد فاتورة — LIGEER</title>
+
+  <!-- خط عربي جيد -->
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --main:#0b1320;
+      --accent:#d94b2b;
+      --muted:#666;
+    }
+    body{
+      font-family: 'Tajawal', sans-serif;
+      background:#f4f6f8;
+      margin:0;
+      padding:24px;
+      color:var(--main);
+      -webkit-font-smoothing:antialiased;
+    }
+    .container{
+      max-width:900px;
+      margin:0 auto;
+    }
+
+    .form-panel, .preview-panel{
+      background:#fff;
+      border-radius:10px;
+      box-shadow:0 6px 18px rgba(10,20,30,.06);
+      padding:18px;
+      margin-bottom:18px;
+    }
+
+    h2{ margin:6px 0 14px; font-weight:700; }
+
+    label{ display:block; margin:10px 0 6px; font-weight:600; color:var(--muted); }
+    input[type="text"], input[type="tel"], input[type="date"], input[type="number"], textarea{
+      width:100%;
+      padding:10px;
+      border:1px solid #e6e9ee;
+      border-radius:8px;
+      box-sizing:border-box;
+      font-size:14px;
+      background:#fcfdff;
+    }
+    .row { display:flex; gap:12px; }
+    .col { flex:1; }
+    .small { width:140px; }
+
+    .btn {
+      display:inline-block;
+      padding:10px 14px;
+      border-radius:8px;
+      background:var(--main);
+      color:#fff;
+      cursor:pointer;
+      border:none;
+      font-weight:700;
+      margin-top:12px;
+    }
+    .btn.secondary{ background:#666; }
+    .controls{ display:flex; gap:8px; flex-wrap:wrap; }
+
+    /* فاتورة الشكل */
+    .invoice{
+      width:800px;
+      margin:0 auto;
+      padding:24px;
+      box-sizing:border-box;
+      background:#fff;
+      color:var(--main);
+      border-radius:6px;
+      direction:rtl;
+    }
+    .invoice .header{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+    .brand { text-align:right; }
+    .brand h1{ margin:0; font-size:30px; letter-spacing:2px; }
+    .brand p{ margin:6px 0 0; color:var(--muted); font-size:14px; }
+    .meta { text-align:left; font-size:13px; color:var(--muted); }
+    .divider{ height:1px; background:#eee; margin:12px 0; }
+
+    table{ width:100%; border-collapse:collapse; font-size:14px; }
+    th, td{ padding:10px 8px; border-bottom:1px solid #f0f0f0; text-align:right; }
+    th{ font-weight:700; color:var(--muted); background:transparent; text-align:right; }
+    .right { text-align:left; } /* للعمود الأيسر في RTL */
+
+    .totals { margin-top:8px; display:flex; justify-content:flex-end; gap:10px; }
+    .totals .box { width:260px; background:#fafafa; padding:12px; border-radius:8px; font-weight:700; }
+
+    .footer{ margin-top:18px; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted); }
+    .contact { text-align:right; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="form-panel">
+      <h2>مولد فاتورة — LIGEER</h2>
+
+      <div class="row">
+        <div class="col">
+          <label>اسم المتجر</label>
+          <input id="shop_name" type="text" value="LIGEER المتجر الإلكتروني">
+        </div>
+        <div class="col">
+          <label>البريد الإلكتروني</label>
+          <input id="shop_email" type="text" value="ligeer.lr@gmail.com">
+        </div>
+        <div class="col small">
+          <label>هاتف المتجر</label>
+          <input id="shop_phone" type="tel" value="+966537022394">
+        </div>
+      </div>
+
+      <label>عنوان المتجر (سطر واحد)</label>
+      <input id="shop_address" type="text" value="Bani Malik, King Fahd Branch Road, جدة 23331, السعودية">
+
+      <div class="row">
+        <div class="col">
+          <label>اسم العميل</label>
+          <input id="customer_name" type="text" value="فيصل الشريف">
+        </div>
+        <div class="col small">
+          <label>هاتف العميل</label>
+          <input id="customer_phone" type="tel" value="+966551525544">
+        </div>
+        <div class="col small">
+          <label>رقم الفاتورة</label>
+          <input id="invoice_no" type="text" value="184481794">
+        </div>
+        <div class="col small">
+          <label>تاريخ</label>
+          <input id="invoice_date" type="date" value="2025-05-18">
+        </div>
+      </div>
+
+      <hr style="border:none;height:1px;background:#eee;margin:12px 0">
+
+      <h3>منتجات (أضف/حرّر)</h3>
+      <div id="items_wrapper">
+        <!-- قالب صف المنتج -->
+      </div>
+
+      <div style="margin-top:8px;">
+        <button class="btn secondary" onclick="addItem()">أضف منتج</button>
+      </div>
+
+      <div style="margin-top:14px;" class="controls">
+        <button class="btn" onclick="renderPreview()">تحديث المعاينة</button>
+        <button class="btn" onclick="downloadPDF()">تحميل PDF</button>
+        <button class="btn secondary" onclick="printPreview()">طباعة</button>
+      </div>
+    </div>
+
+    <div class="preview-panel">
+      <h2>معاينة الفاتورة</h2>
+      <div id="invoice_preview" class="invoice">
+        <!-- سيتم تعبئته -->
+      </div>
+    </div>
+  </div>
+
+  <!-- مكتبة html2pdf (تستخدم html2canvas + jsPDF بداخليًا) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+
+  <script>
+    // بيانات أولية مطابقه للفاتورة اللي ارسلتها
+    const defaultItems = [
+      {desc:'مق صغير + طباعة أمام وخلف', qty:4, price:35},
+      {desc:'مق كبير + طباعة أمام وخلف', qty:4, price:35}
+    ];
+
+    function addItem(item){
+      const wrapper = document.getElementById('items_wrapper');
+      const idx = wrapper.children.length;
+      const data = item || {desc:'', qty:1, price:0};
+      const row = document.createElement('div');
+      row.style.display='flex';
+      row.style.gap='8px';
+      row.style.marginTop='8px';
+      row.innerHTML = `
+        <input class="item_desc" placeholder="الوصف" value="${escapeHtml(data.desc)}" style="flex:1;padding:8px;border-radius:6px;border:1px solid #e9eef3" />
+        <input class="item_qty" type="number" min="1" value="${data.qty}" style="width:80px;padding:8px;border-radius:6px;border:1px solid #e9eef3" />
+        <input class="item_price" type="number" min="0" value="${data.price}" style="width:110px;padding:8px;border-radius:6px;border:1px solid #e9eef3" />
+        <button onclick="removeItem(this)" style="background:#ff6464;color:#fff;border:none;padding:8px;border-radius:6px;cursor:pointer">حذف</button>
+      `;
+      wrapper.appendChild(row);
+    }
+
+    function removeItem(btn){
+      btn.parentElement.remove();
+    }
+
+    function escapeHtml(s){ return (s||'').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
+
+    // نسخ العناصر الإفتراضية
+    window.addEventListener('DOMContentLoaded', ()=>{
+      defaultItems.forEach(it => addItem(it));
+      renderPreview();
+    });
+
+    function gatherData(){
+      const shop_name = document.getElementById('shop_name').value;
+      const shop_email = document.getElementById('shop_email').value;
+      const shop_phone = document.getElementById('shop_phone').value;
+      const shop_address = document.getElementById('shop_address').value;
+      const customer_name = document.getElementById('customer_name').value;
+      const customer_phone = document.getElementById('customer_phone').value;
+      const invoice_no = document.getElementById('invoice_no').value;
+      const invoice_date = document.getElementById('invoice_date').value;
+
+      const items = Array.from(document.querySelectorAll('#items_wrapper > div')).map(div=>{
+        return {
+          desc: div.querySelector('.item_desc').value,
+          qty: Number(div.querySelector('.item_qty').value||0),
+          price: Number(div.querySelector('.item_price').value||0)
+        };
+      });
+
+      return {shop_name, shop_email, shop_phone, shop_address, customer_name, customer_phone, invoice_no, invoice_date, items};
+    }
+
+    function renderPreview(){
+      const d = gatherData();
+      const preview = document.getElementById('invoice_preview');
+      // احسب الإجماليات
+      let subtotal = 0;
+      const rows = d.items.map(it=>{
+        const total = it.qty * it.price;
+        subtotal += total;
+        return `<tr>
+          <td style="width:50%">${escapeHtml(it.desc)}</td>
+          <td>${it.qty}</td>
+          <td class="right">${it.price.toFixed(2)} SAR</td>
+          <td class="right">${total.toFixed(2)} SAR</td>
+        </tr>`;
+      }).join('');
+
+      const html = `
+        <div class="header">
+          <div class="brand">
+            <h1>LIGEER</h1>
+            <p>${escapeHtml(d.shop_name)}</p>
+            <p style="margin-top:6px;font-size:13px;color:var(--muted)">${escapeHtml(d.shop_address)}</p>
+          </div>
+
+          <div class="meta">
+            <div><strong>فاتورة #</strong> ${escapeHtml(d.invoice_no)}</div>
+            <div style="margin-top:6px"><strong>التاريخ:</strong> ${d.invoice_date || new Date().toISOString().slice(0,10)}</div>
+            <div style="margin-top:6px"><strong>هاتف المتجر:</strong> ${escapeHtml(d.shop_phone)}</div>
+            <div style="margin-top:6px"><strong>البريد:</strong> ${escapeHtml(d.shop_email)}</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+          <div style="text-align:right">
+            <div><strong>مصدرة إلى:</strong></div>
+            <div style="margin-top:6px">${escapeHtml(d.customer_name)}</div>
+            <div style="margin-top:6px;color:var(--muted)">${escapeHtml(d.customer_phone)}</div>
+          </div>
+
+          <div style="text-align:left;color:var(--muted);font-size:13px">
+            <div>تفاصيل الطلب</div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
+          <table>
+            <thead>
+              <tr><th>الوصف</th><th>الكمية</th><th class="right">سعر الوحدة</th><th class="right">الإجمالي</th></tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="totals">
+          <div class="box">
+            <div style="display:flex;justify-content:space-between"><span>مجموع السلة</span><span>${subtotal.toFixed(2)} SAR</span></div>
+            <div style="display:flex;justify-content:space-between;margin-top:8px"><span>إجمالي الطلب</span><span>${subtotal.toFixed(2)} SAR</span></div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div class="contact">
+            <div><strong>بيانات التواصل</strong></div>
+            <div style="margin-top:6px">${escapeHtml(d.shop_name)}</div>
+            <div style="margin-top:4px">${escapeHtml(d.shop_phone)}</div>
+            <div style="margin-top:4px">${escapeHtml(d.shop_email)}</div>
+          </div>
+
+          <div style="text-align:left">
+            <div>شكراً لشرائك من المتجر. نتمنى لك يوماً رائعاً.</div>
+          </div>
+        </div>
+      `;
+
+      preview.innerHTML = html;
+    }
+
+    function downloadPDF(){
+      renderPreview(); // تأكد المعاينة محدثة
+      const element = document.getElementById('invoice_preview');
+
+      // خيارات html2pdf
+      const opt = {
+        margin:       10,
+        filename:     (document.getElementById('invoice_no').value || 'invoice') + '.pdf',
+        image:        { type: 'jpeg', quality: 1 },
+        html2canvas:  { scale: 2, useCORS: true, logging:false, allowTaint:true },
+        jsPDF:        { unit: 'pt', format: 'a4', orientation: 'portrait' }
+      };
+
+      // توليد الـ PDF
+      html2pdf().set(opt).from(element).save();
+    }
+
+    function printPreview(){
+      renderPreview();
+      const w = window.open('', '_blank');
+      w.document.write('<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>طباعة الفاتورة</title><link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700&display=swap" rel="stylesheet"><style>body{font-family:Tajawal, sans-serif;margin:24px}</style></head><body>');
+      w.document.write(document.getElementById('invoice_preview').outerHTML);
+      w.document.write('</body></html>');
+      w.document.close();
+      w.focus();
+      setTimeout(()=> w.print(), 600);
+    }
+  </script>
+</body>
+</html>
