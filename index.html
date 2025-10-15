@@ -39,7 +39,7 @@
       width:100%;padding:10px;border:1px solid #e6e9ee;border-radius:8px;
       box-sizing:border-box;font-size:14px;background:#fcfdff;
     }
-    .row{display:flex;gap:12px;}
+    .row{display:flex;gap:12px;flex-wrap:wrap;}
     .col{flex:1;}
     .small{width:140px;}
     .btn{
@@ -112,6 +112,10 @@
           <label>هاتف العميل</label>
           <input id="customer_phone" type="tel" value="+966551525544">
         </div>
+        <div class="col">
+          <label>عنوان العميل</label>
+          <input id="customer_address" type="text" value="جدة - حي النسيم">
+        </div>
         <div class="col small">
           <label>رقم الفاتورة</label>
           <input id="invoice_no" type="text" value="184481794">
@@ -150,6 +154,7 @@
       {desc:'مق صغير + طباعة أمام وخلف',qty:4,price:35},
       {desc:'مق كبير + طباعة أمام وخلف',qty:4,price:35}
     ];
+
     function addItem(item){
       const wrapper=document.getElementById('items_wrapper');
       const data=item||{desc:'',qty:1,price:0};
@@ -164,9 +169,12 @@
         <button onclick="removeItem(this)" style="background:#ff6464;color:#fff;border:none;padding:8px;border-radius:6px;cursor:pointer">حذف</button>`;
       wrapper.appendChild(row);
     }
+
     function removeItem(btn){btn.parentElement.remove();}
     function escapeHtml(s){return (s||'').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
+
     window.addEventListener('DOMContentLoaded',()=>{defaultItems.forEach(it=>addItem(it));renderPreview();});
+
     function gatherData(){
       const shop_name=document.getElementById('shop_name').value;
       const shop_email=document.getElementById('shop_email').value;
@@ -174,6 +182,7 @@
       const shop_address=document.getElementById('shop_address').value;
       const customer_name=document.getElementById('customer_name').value;
       const customer_phone=document.getElementById('customer_phone').value;
+      const customer_address=document.getElementById('customer_address').value;
       const invoice_no=document.getElementById('invoice_no').value;
       const invoice_date=document.getElementById('invoice_date').value;
       const items=Array.from(document.querySelectorAll('#items_wrapper>div')).map(div=>({
@@ -181,10 +190,12 @@
         qty:Number(div.querySelector('.item_qty').value||0),
         price:Number(div.querySelector('.item_price').value||0)
       }));
-      return{shop_name,shop_email,shop_phone,shop_address,customer_name,customer_phone,invoice_no,invoice_date,items};
+      return{shop_name,shop_email,shop_phone,shop_address,customer_name,customer_phone,customer_address,invoice_no,invoice_date,items};
     }
+
     function renderPreview(){
-      const d=gatherData();const preview=document.getElementById('invoice_preview');
+      const d=gatherData();
+      const preview=document.getElementById('invoice_preview');
       let subtotal=0;
       const rows=d.items.map(it=>{
         const total=it.qty*it.price;subtotal+=total;
@@ -204,29 +215,35 @@
             <div style="margin-top:6px"><strong>البريد:</strong> ${escapeHtml(d.shop_email)}</div>
           </div>
         </div>
+
         <div class="divider"></div>
+
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
           <div style="text-align:right">
             <div><strong>مصدرة إلى:</strong></div>
             <div style="margin-top:6px">${escapeHtml(d.customer_name)}</div>
             <div style="margin-top:6px;color:var(--muted)">${escapeHtml(d.customer_phone)}</div>
+            <div style="margin-top:6px;color:var(--muted)">${escapeHtml(d.customer_address)}</div>
           </div>
           <div style="text-align:left;color:var(--muted);font-size:13px">
             <div>تفاصيل الطلب</div>
           </div>
         </div>
+
         <div style="margin-top:14px">
           <table>
             <thead><tr><th>الوصف</th><th>الكمية</th><th class="right">سعر الوحدة</th><th class="right">الإجمالي</th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
         </div>
+
         <div class="totals">
           <div class="box">
             <div style="display:flex;justify-content:space-between"><span>مجموع السلة</span><span>${subtotal.toFixed(2)} SAR</span></div>
             <div style="display:flex;justify-content:space-between;margin-top:8px"><span>إجمالي الطلب</span><span>${subtotal.toFixed(2)} SAR</span></div>
           </div>
         </div>
+
         <div class="footer">
           <div class="contact">
             <div><strong>بيانات التواصل</strong></div>
